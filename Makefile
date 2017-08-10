@@ -25,8 +25,7 @@ ARCH= -gencode arch=compute_30,code=sm_30 \
       -gencode arch=compute_52,code=[sm_52,compute_52]
 
 # This is what I use, uncomment if you know your arch and want to specify
-# ARCH=  -gencode arch=compute_52,code=compute_52
-
+ #ARCH=  -gencode arch=compute_61,code=compute_61
 # C Definitions
 
 VPATH=./src/
@@ -42,7 +41,7 @@ OBJDIR_CPP_SHARED=./obj-cpp-shared/
 CC_CPP=g++
 CFLAGS_CPP=-Wno-write-strings -std=c++0x
 
-NVCC=nvcc
+NVCC=nvcc --compiler-options '-fPIC' -D_FORCE_INLINES
 
 OPTS=-Ofast
 LDFLAGS= -lm -pthread 

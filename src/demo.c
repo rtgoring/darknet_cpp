@@ -16,6 +16,12 @@
 #ifdef OPENCV
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include<iostream>
+using namespace cv;
+using namespace std;
 image get_image_from_stream(CvCapture *cap);
 
 static char **demo_names;
@@ -39,7 +45,7 @@ static float *predictions[FRAMES];
 static int demo_index = 0;
 static image images[FRAMES];
 static float *avg;
-
+int    frameCounter = 0;
 void *fetch_in_thread(void *ptr)
 {
     in = get_image_from_stream(cap);
@@ -81,6 +87,34 @@ void *detect_in_thread(void *ptr)
     demo_index = (demo_index + 1)%FRAMES;
 
     draw_detections(det, l.w*l.h*l.n, demo_thresh, boxes, probs, demo_names, demo_alphabet, demo_classes);
+
+//Convert image to IIPL
+    int x,y,k;
+    image copy = copy_image(det);
+    constrain_image(copy);
+    if(det.c == 3) rgbgr_image(copy);
+    
+    IplImage *input = cvCreateImage(cvSize(det.w,det.h), IPL_DEPTH_8U, det.c);
+    int step = input->widthStep;
+    
+    for(y = 0; y < det.h; ++y){
+        for(x = 0; x < det.w; ++x){
+            for(k= 0; k < det.c; ++k){
+                input->imageData[y*step + x*det.c + k] = (unsigned char)(get_pixel(copy,x,y,k)*255);
+            }
+        }
+    }
+    
+    free_image(copy);
+    char buffer [160];
+    sprintf(buffer,"output/%d.jpeg",frameCounter);
+    //Convert IIPL to MAT
+    cv::Mat outputMatFull = cv::cvarrToMat(input);
+    cout << buffer << endl;
+
+    imwrite(buffer,outputMatFull);
+    frameCounter = frameCounter+1;
+   /// cvReleaseImage(&outputMatFull);
 
     return 0;
 }
